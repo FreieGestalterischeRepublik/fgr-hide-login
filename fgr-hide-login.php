@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  FGR Hide Login
  * Description:  Ein Plugin der Freien Gestalterischen Republik. Ändert die WordPress-Login-URL zu einer eigenen, individuellen URL und blockiert den direkten Zugriff auf wp-login.php.
- * Version:      1.1.0
+ * Version:      1.2.0
  * Author:       Freie Gestalterische Republik
  * Author URI:   https://fgr.design
  * License:      GPL-2.0-or-later
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FGR_HIDE_LOGIN_VERSION', '1.1.0' );
+define( 'FGR_HIDE_LOGIN_VERSION', '1.2.0' );
 define( 'FGR_HIDE_LOGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 // Update-Checker: prüft GitHub auf neue Versionen
@@ -36,6 +36,74 @@ if ( is_admin() && str_ends_with( untrailingslashit( plugin_dir_path( __FILE__ )
             . '</p></div>';
     } );
 }
+
+// ── MU-Plugin-Sync ────────────────────────────────────────────────────────────
+// Installiert/aktualisiert das MU-Plugin von GitHub (function_exists-Guard: MU-Plugin definiert dieselbe Funktion)
+
+if ( ! function_exists( 'fgr_mu_sync' ) ) {
+    function fgr_mu_sync(): void {
+        $url      = 'https://raw.githubusercontent.com/FreieGestalterischeRepublik/fgr-plugin-overview/main/fgr-plugin-overview.php';
+        $dest_dir = WPMU_PLUGIN_DIR;
+        $dest     = $dest_dir . '/fgr-plugin-overview.php';
+
+        $response = wp_remote_get( $url, [
+            'timeout'    => 15,
+            'user-agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url(),
+        ] );
+
+        if ( is_wp_error( $response ) ) return;
+        if ( 200 !== wp_remote_retrieve_response_code( $response ) ) return;
+
+        $remote_content = wp_remote_retrieve_body( $response );
+        if ( empty( $remote_content ) ) return;
+
+        preg_match( '/\*\s+Version:\s+([\d.]+)/i', $remote_content, $matches );
+        $remote_version = $matches[1] ?? '0';
+
+        // Installierte Version lesen
+        $installed_version = '0';
+        if ( file_exists( $dest ) ) {
+            $contents = file_get_contents( $dest );
+            preg_match( '/\*\s+Version:\s+([\d.]+)/i', $contents, $m );
+            $installed_version = $m[1] ?? '0';
+        }
+
+        if ( ! file_exists( $dest ) || version_compare( $remote_version, $installed_version, '>' ) ) {
+            if ( ! is_dir( $dest_dir ) ) {
+                wp_mkdir_p( $dest_dir );
+            }
+            file_put_contents( $dest, $remote_content );
+            delete_transient( 'fgr_mu_update_info' );
+        }
+    }
+}
+
+// MU-Plugin bei Plugin-Aktivierung installieren/aktualisieren
+register_activation_hook( __FILE__, 'fgr_mu_sync' );
+
+// MU-Plugin nach Update eines FGR-Plugins aktualisieren
+add_action( 'upgrader_process_complete', function ( $upgrader, array $hook_extra ): void {
+    if ( ( $hook_extra['type'] ?? '' ) !== 'plugin' ) return;
+    if ( ( $hook_extra['action'] ?? '' ) !== 'update' ) return;
+
+    $fgr_plugins = [
+        'fgr-mail-smtp/fgr-mail-smtp.php',
+        'fgr-hide-login/fgr-hide-login.php',
+        'fgr-maintenance/fgr-maintenance.php',
+    ];
+
+    $updated = array_merge(
+        isset( $hook_extra['plugin'] )  ? (array) $hook_extra['plugin']  : [],
+        isset( $hook_extra['plugins'] ) ? (array) $hook_extra['plugins'] : []
+    );
+
+    foreach ( $updated as $plugin_file ) {
+        if ( in_array( $plugin_file, $fgr_plugins, true ) ) {
+            fgr_mu_sync();
+            return;
+        }
+    }
+}, 10, 2 );
 
 // ── Gemeinsamer FGR-Admin-Menüpunkt ──────────────────────────────────────────
 // function_exists-Guard verhindert Doppelung wenn mehrere FGR-Plugins aktiv sind
@@ -80,6 +148,13 @@ if ( ! function_exists( 'fgr_register_admin_menu' ) ) {
                 'name' => 'FGR Hide Login',
                 'desc' => 'Login-URL individuell anpassen und schützen',
                 'page' => 'fgr-hide-login',
+            ],
+            [
+                'slug' => 'fgr-maintenance',
+                'file' => 'fgr-maintenance/fgr-maintenance.php',
+                'name' => 'FGR Maintenance',
+                'desc' => 'Under-Construction- oder Wartungsseite anzeigen',
+                'page' => 'fgr-maintenance',
             ],
         ];
         ?>
@@ -167,7 +242,7 @@ if ( ! function_exists( 'fgr_register_admin_menu' ) ) {
         }
 
         $slug    = sanitize_key( $_POST['slug'] ?? '' );
-        $allowed = [ 'fgr-mail-smtp', 'fgr-hide-login' ];
+        $allowed = [ 'fgr-mail-smtp', 'fgr-hide-login', 'fgr-maintenance' ];
 
         if ( ! in_array( $slug, $allowed, true ) ) {
             wp_send_json_error( 'Unbekanntes Plugin.' );
