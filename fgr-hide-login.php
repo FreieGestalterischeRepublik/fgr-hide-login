@@ -2,18 +2,18 @@
 /**
  * Plugin Name:  FGR Hide Login
  * Description:  Ein Plugin der Freien Gestalterischen Republik. Ändert die WordPress-Login-URL zu einer eigenen, individuellen URL und blockiert den direkten Zugriff auf wp-login.php.
- * Version:      1.2.0
+ * Version:      1.3.0
  * Author:       Freie Gestalterische Republik
  * Author URI:   https://fgr.design
  * License:      GPL-2.0-or-later
- * Requires PHP: 8.0
+ * Requires PHP: 7.4
  * Requires at least: 6.0
  * Text Domain:  fgr-hide-login
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FGR_HIDE_LOGIN_VERSION', '1.2.0' );
+define( 'FGR_HIDE_LOGIN_VERSION', '1.3.0' );
 define( 'FGR_HIDE_LOGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 // Update-Checker: prüft GitHub auf neue Versionen
@@ -27,7 +27,7 @@ $fgr_hide_login_updater->setBranch( 'main' );
 $fgr_hide_login_updater->getVcsApi()->enableReleaseAssets();
 
 // Warnung wenn Plugin im falschen Ordner installiert ist (z. B. "fgr-hide-login-main")
-if ( is_admin() && str_ends_with( untrailingslashit( plugin_dir_path( __FILE__ ) ), '-main' ) ) {
+if ( is_admin() && substr( untrailingslashit( plugin_dir_path( __FILE__ ) ), -5 ) === '-main' ) {
     add_action( 'admin_notices', function () {
         echo '<div class="notice notice-error"><p>'
             . '<strong>FGR Hide Login:</strong> Das Plugin ist im falschen Ordner installiert '
