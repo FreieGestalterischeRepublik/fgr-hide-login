@@ -2,7 +2,7 @@
 
 Ein WordPress-Plugin der [Freien Gestalterischen Republik](https://fgr.design).
 
-Ändert die WordPress-Login-URL zu einer eigenen, individuellen URL und blockiert den direkten Zugriff auf `wp-login.php`. Erhöht die Sicherheit durch Security by Obscurity – verhindert automatisierte Brute-Force-Angriffe auf die Standard-Login-URL.
+Ändert die WordPress-Login-URL zu einer eigenen, individuellen URL und blockiert den direkten Zugriff auf `wp-login.php`. Erhöht die Sicherheit durch Security by Obscurity – erschwert automatisierte Massen-Scans auf die Standard-Login-URL. Ersetzt kein Rate-Limiting oder Zwei-Faktor-Authentifizierung: `xmlrpc.php` und der REST-API-Login (Application Passwords) sind von dieser Verschleierung nicht betroffen.
 
 ---
 

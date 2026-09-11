@@ -28,6 +28,7 @@ class FGR_Hide_Login_Settings {
 
     public function handle_save(): void {
         if ( ! isset( $_POST['fgr_hide_login_save'] ) ) return;
+        if ( ! current_user_can( 'manage_options' ) ) return;
         check_admin_referer( 'fgr_hide_login_save', 'fgr_hide_login_nonce' );
 
         $slug = sanitize_title_with_dashes( $_POST['fgr_hide_login_slug'] ?? 'fgr-login' );
