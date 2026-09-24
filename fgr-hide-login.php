@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  FGR Hide Login
  * Description:  Ein Plugin der Freien Gestalterischen Republik. Ändert die WordPress-Login-URL zu einer eigenen, individuellen URL und blockiert den direkten Zugriff auf wp-login.php.
- * Version:      1.3.2
+ * Version:      1.3.3
  * Author:       Freie Gestalterische Republik
  * Author URI:   https://fgr.design
  * License:      GPL-2.0-or-later
@@ -13,18 +13,25 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FGR_HIDE_LOGIN_VERSION', '1.3.2' );
+define( 'FGR_HIDE_LOGIN_VERSION', '1.3.3' );
 define( 'FGR_HIDE_LOGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 // Update-Checker: prüft GitHub auf neue Versionen
 require_once plugin_dir_path( __FILE__ ) . 'lib/plugin-update-checker/plugin-update-checker.php';
 $fgr_hide_login_updater = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-    'https://github.com/FreieGestalterischeRepublik/fgr-hide-login/',
+    'https://fgr-plugins-api.fgr.design/fgr-hide-login.json',
     __FILE__,
     'fgr-hide-login'
 );
-$fgr_hide_login_updater->setBranch( 'main' );
-$fgr_hide_login_updater->getVcsApi()->enableReleaseAssets();
+
+// Auto-Update: WordPress' täglicher Update-Cron installiert neue Versionen
+// dieses Plugins automatisch, kein manueller Klick auf jeder Seite nötig.
+add_filter( 'auto_update_plugin', function ( $update, $item ) {
+    if ( isset( $item->slug ) && $item->slug === 'fgr-hide-login' ) {
+        return true;
+    }
+    return $update;
+}, 10, 2 );
 
 // Warnung wenn Plugin im falschen Ordner installiert ist (z. B. "fgr-hide-login-main")
 if ( is_admin() && substr( untrailingslashit( plugin_dir_path( __FILE__ ) ), -5 ) === '-main' ) {
