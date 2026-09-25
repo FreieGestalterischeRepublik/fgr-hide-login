@@ -4,6 +4,8 @@ defined( 'ABSPATH' ) || exit;
 class FGR_Hide_Login_Settings {
 
     public function __construct() {
+        // Bewusst pro Einzelseite (nicht netzwerkweit): der Login-Slug ist je Seite
+        // unterschiedlich, jede Seite im Netzwerk braucht ihre eigene Einstellungsseite.
         add_action( 'admin_menu',    [ $this, 'add_menu' ] );
         add_action( 'admin_init',    [ $this, 'handle_save' ] );
         add_action( 'admin_notices', [ $this, 'show_notices' ] );

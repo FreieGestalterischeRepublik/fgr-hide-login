@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  FGR Hide Login
  * Description:  Ein Plugin der Freien Gestalterischen Republik. Ändert die WordPress-Login-URL zu einer eigenen, individuellen URL und blockiert den direkten Zugriff auf wp-login.php.
- * Version:      1.3.4
+ * Version:      1.3.5
  * Author:       Freie Gestalterische Republik
  * Author URI:   https://fgr.design
  * License:      GPL-2.0-or-later
@@ -154,7 +154,13 @@ if ( ! function_exists( 'fgr_register_admin_menu' ) ) {
             'fgr_render_plugins_overview'
         );
     }
-    add_action( is_multisite() ? 'network_admin_menu' : 'admin_menu', 'fgr_register_admin_menu', 5 );
+    // Erscheint bei Multisite an beiden Stellen: pro Einzelseite (für Plugins mit
+    // seitenspezifischen Einstellungen wie Hide Login) und in der Netzwerkverwaltung
+    // (für netzwerkweite Plugins wie Mail SMTP).
+    add_action( 'admin_menu', 'fgr_register_admin_menu', 5 );
+    if ( is_multisite() ) {
+        add_action( 'network_admin_menu', 'fgr_register_admin_menu', 5 );
+    }
 
     function fgr_render_plugins_overview(): void {
         $plugins = [
