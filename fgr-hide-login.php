@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  FGR Hide Login
  * Description:  Ein Plugin der Freien Gestalterischen Republik. Ändert die WordPress-Login-URL zu einer eigenen, individuellen URL und blockiert den direkten Zugriff auf wp-login.php.
- * Version:      1.3.6
+ * Version:      1.3.7
  * Author:       Freie Gestalterische Republik
  * Author URI:   https://fgr.design
  * License:      GPL-2.0-or-later
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FGR_HIDE_LOGIN_VERSION', '1.3.6' );
+define( 'FGR_HIDE_LOGIN_VERSION', '1.3.7' );
 define( 'FGR_HIDE_LOGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 // Update-Checker: prüft GitHub auf neue Versionen
@@ -440,11 +440,17 @@ class FGR_Hide_Login {
 
         // Neuer Login-Slug → original wp-login.php ausführen
         if ( 'wp-login.php' === $pagenow ) {
-            if ( is_user_logged_in() && ! isset( $_REQUEST['action'] ) ) {
+            // Kleines Login-Fenster (abgelaufene Sitzung im Backend) nie ins Backend
+            // umleiten, sonst lädt das komplette Backend im Fenster.
+            if ( is_user_logged_in() && ! isset( $_REQUEST['action'] ) && ! isset( $_REQUEST['interim-login'] ) ) {
                 nocache_headers();
                 wp_safe_redirect( admin_url() );
                 die();
             }
+            // wp-login.php erwartet diese Variablen global; ohne die Deklaration landen
+            // sie im Scope dieser Methode, und login_header() setzt z. B. die Klasse
+            // "interim-login-success" nicht, an der WordPress das Fenster schließt.
+            global $error, $interim_login, $action, $user_login;
             require_once ABSPATH . 'wp-login.php';
             die;
         }
